@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RuleCheck</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; }
+      main { max-width: 40rem; margin: 0 auto; padding: 1.25rem; }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      p { line-height: 1.4; }
+      label { display: block; margin: 0.9rem 0 0.3rem; font-weight: 600; }
+      input, textarea, button { width: 100%; box-sizing: border-box; font: inherit; }
+      input, textarea { padding: 0.55rem 0.65rem; }
+      textarea { min-height: 5.5rem; resize: vertical; }
+      button { margin-top: 0.8rem; padding: 0.65rem; }
+      .row { display: flex; gap: 0.5rem; }
+      .row button { width: auto; flex: 1; }
+      #status, #error, #result { white-space: pre-wrap; word-break: break-word; }
+      #error { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>RuleCheck</h1>
+      <p>Checks one rule against one public page. The Intelligent Contract does the reading and the judgment.</p>
+      <label for="address">Contract address</label>
+      <input id="address" value="0x841Dc93f665AD1fe32A1d026dFcD250ed1515a13" autocomplete="off" />
+      <label for="rule">Rule</label>
+      <textarea id="rule" maxlength="500" placeholder="The page says this domain is for use in documentation examples."></textarea>
+      <label for="url">Evidence URL</label>
+      <input id="url" type="url" maxlength="400" placeholder="https://example.com/" />
+      <div class="row">
+        <button id="connect" type="button">Connect wallet</button>
+        <button id="read" type="button">Read saved result</button>
+      </div>
+      <button id="submit" type="button">Verify</button>
+      <p id="wallet"></p>
+      <p id="status">idle</p>
+      <p id="error"></p>
+      <pre id="result"></pre>
+    </main>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
