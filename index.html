@@ -156,26 +156,27 @@
         .desk { box-shadow: 0.35rem 0.35rem 0 #d6f25c; }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-DHFnjVxz.js"></script>
   </head>
   <body>
     <div class="shell">
       <header class="mast">
         <p class="kicker">Studionet evidence desk</p>
         <h1>Rule<br />Check</h1>
-        <p class="lede">One rule. One public page. The contract reads the page and returns PASS, FAIL, or INCONCLUSIVE.</p>
+        <p class="lede">Each check is its own case. A later check does not replace an earlier one, and the caller address stays on the record.</p>
         <div class="stamp">Not a claim form</div>
       </header>
       <section class="desk">
         <label for="address">Contract</label>
-        <input id="address" value="0x841Dc93f665AD1fe32A1d026dFcD250ed1515a13" autocomplete="off" />
+        <input id="address" value="0x68A8b08b4da4c8a416bf3DF6413481F5dA117231" autocomplete="off" />
+        <label for="case">Case id</label>
+        <input id="case" inputmode="numeric" maxlength="12" placeholder="Leave empty to read your latest case" />
         <label for="rule">Rule</label>
         <textarea id="rule" maxlength="500" placeholder="The page says this domain is for use in documentation examples."></textarea>
         <label for="url">Evidence URL</label>
         <input id="url" type="url" maxlength="400" placeholder="https://example.com/" />
         <div class="actions">
           <button id="connect" type="button">Connect</button>
-          <button id="read" type="button">Saved result</button>
+          <button id="read" type="button">Read case</button>
           <button id="submit" type="button">Run the check</button>
         </div>
         <p id="wallet"></p>
@@ -184,5 +185,6 @@
         <pre id="result"></pre>
       </section>
     </div>
+    <script type="module" src="/main.js"></script>
   </body>
 </html>
