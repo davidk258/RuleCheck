@@ -1,6 +1,7 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-"""RuleCheck: decide whether one public page satisfies one rule."""
+"""RuleCheck: one stored case per verification, keyed to its caller."""
 
+from dataclasses import dataclass
 from genlayer import *
 
 MAX_RULE_LEN = 500
@@ -10,26 +11,52 @@ MAX_EXPLANATION_LEN = 400
 VERDICTS = ("PASS", "FAIL", "INCONCLUSIVE")
 
 
-class RuleCheck(gl.Contract):
+@allow_storage
+@dataclass
+class CaseRecord:
+    case_id: str
+    caller: Address
     rule: str
     evidence_url: str
     verdict: str
     explanation: str
 
+
+class RuleCheck(gl.Contract):
+    next_id: u256
+    cases: TreeMap[str, CaseRecord]
+    by_caller: TreeMap[Address, DynArray[str]]
+
     def __init__(self):
-        self.rule = ""
-        self.evidence_url = ""
-        self.verdict = ""
-        self.explanation = ""
+        self.next_id = u256(0)
+
+    def _record(self, item: CaseRecord):
+        return {
+            "case_id": item.case_id,
+            "caller": str(item.caller),
+            "rule": item.rule,
+            "evidence_url": item.evidence_url,
+            "verdict": item.verdict,
+            "explanation": item.explanation,
+        }
 
     @gl.public.view
-    def get_result(self):
-        return {
-            "rule": self.rule,
-            "evidence_url": self.evidence_url,
-            "verdict": self.verdict,
-            "explanation": self.explanation,
-        }
+    def get_case_count(self):
+        return str(self.next_id)
+
+    @gl.public.view
+    def get_case(self, case_id: str):
+        case_id = "" if case_id is None else str(case_id).strip()
+        if case_id not in self.cases:
+            raise gl.vm.UserError("unknown case")
+        return self._record(self.cases[case_id])
+
+    @gl.public.view
+    def get_my_case_ids(self):
+        caller = gl.message.sender_address
+        if caller not in self.by_caller:
+            return []
+        return [item for item in self.by_caller[caller]]
 
     @gl.public.write
     def verify(self, rule: str, evidence_url: str):
@@ -117,7 +144,20 @@ class RuleCheck(gl.Contract):
         if not isinstance(result, dict) or result.get("verdict") not in VERDICTS:
             raise gl.vm.UserError("consensus did not return an allowed verdict")
 
-        self.rule = rule
-        self.evidence_url = evidence_url
-        self.verdict = result["verdict"]
-        self.explanation = str(result.get("explanation", ""))[:MAX_EXPLANATION_LEN]
+        caller = gl.message.sender_address
+        case_id = str(self.next_id + u256(1))
+        self.next_id = self.next_id + u256(1)
+        self.cases[case_id] = CaseRecord(
+            case_id=case_id,
+            caller=caller,
+            rule=rule,
+            evidence_url=evidence_url,
+            verdict=result["verdict"],
+            explanation=str(result.get("explanation", ""))[:MAX_EXPLANATION_LEN],
+        )
+        if caller not in self.by_caller:
+            bucket = DynArray[str]()
+            bucket.append(case_id)
+            self.by_caller[caller] = bucket
+        else:
+            self.by_caller[caller].append(case_id)
