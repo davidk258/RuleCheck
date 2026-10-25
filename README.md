@@ -1,61 +1,78 @@
 # RuleCheck
 
-A one-page app that asks a GenLayer Intelligent Contract whether a public webpage satisfies a rule.
+RuleCheck decides whether one public page satisfies one rule. Each verification is stored as its own case. The record contains a case id, the caller wallet address, the rule, the evidence URL, the verdict (`PASS`, `FAIL`, or `INCONCLUSIVE`), and a short explanation.
 
-The contract fetches the page with `gl.nondet.web.render` and judges it with `gl.nondet.exec_prompt` inside `gl.eq_principle.prompt_comparative`. The latest finalized verdict is stored on the contract. No off-chain model is used.
+A new check is appended. It does not replace an older case. There is no method that overwrites a stored case.
+
+The contract reads the page with `gl.nondet.web.render` and judges it with `gl.nondet.exec_prompt` inside `gl.eq_principle.prompt_comparative`. No off-chain model is used.
+
+## What changed
+
+The first submission kept one shared result. Any later caller could replace it, and nothing identified who had submitted the check.
+
+This version adds:
+
+- a case id for every check
+- the caller address on that case
+- `get_case(case_id)` to read one record back
+- `get_my_case_ids()` to list the connected wallet's cases
+- `get_case_count()` for the number of stored cases
+
+The frontend source and its lockfile are included so the page can be rebuilt.
 
 ## Deployed contract
 
-Checked against Studio Explorer, not assumed:
+Checked on Studio Explorer:
 
 - Network: Studionet, chain id `61999`
-- Address: `0x841Dc93f665AD1fe32A1d026dFcD250ed1515a13`
-- Deploy tx: `0x6859b72cb268fdd62133e05a88cee8983b2afbb8233d4765e41d78316e722a1a`
+- Address: `0xC266A32dA172F38aeE516D066240c51e95d08788`
+- Deploy tx: `0x7517bc765eaab362af88c8410a94bcea724dd01cc40b4aaf7f1081580bf3e5b6`
 - Status: `FINALIZED`, leader execution `SUCCESS`
-- The deployed source contains `class RuleCheck` and `def verify`
 
-The frontend build was compiled locally. It has not been published.
+The earlier address `0x68A8b08b4da4c8a416bf3DF6413481F5dA117231` is not this version. Do not use it.
+
+## Recorded check
+
+One check was submitted and finalized.
+
+- Verify tx: `0xbd8ef81ecb88a054be77d208951bc41f70404ca2cd942937d20c54968da01cb7`
+- Status: `FINALIZED`, leader execution `SUCCESS`
+- Case: `1`
+- Caller: `0xF1cDAf2b4c36d77A2f84812323eE1AC4cA91Bafc`
+- Rule: `The page says this domain is for use in documentation examples.`
+- Evidence URL: `https://example.com/`
+- Verdict: `PASS`
+- Explanation: the page explicitly states that the domain is for use in documentation examples
 
 ## Files
 
 ```text
 contracts/rule_check.py
-frontend/
+frontend/package.json
+frontend/package-lock.json
+frontend/index.html
+frontend/main.js
 ```
 
-## Run the frontend
+`frontend/package-lock.json` is the build manifest (`lockfileVersion` 3). It pins `genlayer-js@1.1.8` and Vite 6.
+
+## Rebuild
+
+From a clean checkout, with Node.js 22:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+npm ci
+npm run build
 ```
 
-`genlayer-js` is pinned to `1.1.8`. Studionet does not expose `sim_getFeeConfig`, so the v2 fee estimator is not used. Writes are sent without a fee distribution.
+`npm ci` installs the lockfile exactly. The static site is `frontend/dist`. Publish `index.html` and the `assets` folder from that directory. Do not publish `frontend/main.js` by itself: the browser cannot resolve its `genlayer-js` import.
 
-Paste is unnecessary: the deployed address is already in the page. Connect a wallet on Studionet, enter a rule and `https://example.com/`, then click Verify. The page stays on `pending` until `waitForTransactionReceipt` reaches `FINALIZED`, then reads `get_result`.
+Studionet does not expose `sim_getFeeConfig`, so the page stays on `genlayer-js@1.1.8` and sends writes without a fee distribution.
 
-## Test
+## Contract methods
 
-PASS:
-
-- rule: `The page says this domain is for use in documentation examples.`
-- evidence URL: `https://example.com/`
-
-FAIL, same URL:
-
-- rule: `The page must sell live concert tickets.`
-
-Do not use `https://test.com`. An earlier similar call on Studionet finalized with `exit_code 1` and saved nothing. An empty rule or a non-http URL must revert with `UserError`.
-
-## Publish
-
-Upload the source without `node_modules`. On Vercel set the root directory to `frontend`, the framework to Vite, the build command to `npm run build`, and the output directory to `dist`.
-
-## GenLayer Projects checklist
-
-- [ ] Contract source matches `0x841Dc93f665AD1fe32A1d026dFcD250ed1515a13`
-- [ ] Deploy tx `0x6859b72cb268fdd62133e05a88cee8983b2afbb8233d4765e41d78316e722a1a` is included
-- [ ] A finalized PASS `verify` and a finalized FAIL `verify` are included
-- [ ] The public app URL is included after Vercel deploy
-- [ ] The writeup does not call the frontend deployed before that URL exists
+- `verify(rule, evidence_url)` appends one case for `gl.message.sender_address`
+- `get_case(case_id)` returns that case, including the caller
+- `get_my_case_ids()` returns the connected wallet's case ids, oldest first
+- `get_case_count()` returns how many cases exist
