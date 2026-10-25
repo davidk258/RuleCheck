@@ -29,7 +29,7 @@ Checked on Studio Explorer:
 - Deploy tx: `0x7517bc765eaab362af88c8410a94bcea724dd01cc40b4aaf7f1081580bf3e5b6`
 - Status: `FINALIZED`, leader execution `SUCCESS`
 
-The earlier address `0x68A8b08b4da4c8a416bf3DF6413481F5dA117231` is not this version. Do not use it.
+
 
 ## Recorded check
 
